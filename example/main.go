@@ -1,8 +1,9 @@
 package main
 
 import (
-	"c/projects/Go/fsm-go/fsm"
 	"fmt"
+
+	"github.com/cgxarrie/fsm-go/fsm"
 )
 
 func printSectionBreak() {
