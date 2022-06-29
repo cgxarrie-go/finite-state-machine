@@ -38,7 +38,7 @@ func New() Fsm {
 	return *fsm
 }
 
-func (fsm *Fsm) ExecuteCommand(command Command) {
+func (fsm *Fsm) ExecuteCommand(command Command) bool {
 	for _, transition := range fsm.Transitions {
 
 		if transition.From != fsm.State || transition.Command != command {
@@ -46,18 +46,45 @@ func (fsm *Fsm) ExecuteCommand(command Command) {
 		}
 
 		if transition.From == fsm.State && transition.Command == command {
-			fmt.Println("Transition found (CFT)", transition.Command, transition.From, transition.To)
 			fsm.State = transition.To
-			return
+			return true
 		}
 	}
 
-	fmt.Println("Transition NOT found")
+	return false
 }
 
 func printSectionBreak() {
 	fmt.Println("")
 	fmt.Println("--------------------------------------")
+}
+
+func printCommandExecuted(executed bool, command Command, from State) {
+	if executed {
+		msg := fmt.Sprintf("Transition found for Command %s From State %s", command, from)
+		fmt.Println(msg)
+		fmt.Println("Command executed", command)
+	} else {
+		msg := fmt.Sprintf("Transition NOT found for Command %s From State %s", command, from)
+		fmt.Println(msg)
+	}
+}
+
+func executeFsmCommand(fsm *Fsm, command Command, expectedState State) {
+	initialState := fsm.State
+	msg := fmt.Sprintf("Execute command %s from %s -> expected state : %s", command, fsm.State, expectedState)
+	fmt.Println(msg)
+
+	executed := fsm.ExecuteCommand(command)
+	printCommandExecuted(executed, command, initialState)
+}
+
+func printFsmTransitions(fsm Fsm) {
+	fmt.Println("Fsm transitions count ", len(fsm.Transitions))
+	for i := 0; i < len(fsm.Transitions); i++ {
+		msg := fmt.Sprintf("When %s from %s goes to %s", fsm.Transitions[i].Command, fsm.Transitions[i].From, fsm.Transitions[i].To)
+		fmt.Println(msg)
+	}
 }
 
 func main() {
@@ -66,34 +93,21 @@ func main() {
 	fsm := New()
 
 	fmt.Println("Fsm Current State ", fsm.State)
-	fmt.Println("Fsm transitions count ", len(fsm.Transitions))
-	for i := 0; i < len(fsm.Transitions); i++ {
-		msg := fmt.Sprintf("When %s from %s goes to %s", fsm.Transitions[i].Command, fsm.Transitions[i].From, fsm.Transitions[i].To)
-		fmt.Println(msg)
-	}
+	printFsmTransitions(fsm)
 
 	printSectionBreak()
-	fmt.Println("Execute command InsertCoin from Locked -> expected state : ", Unlocked)
-
-	fsm.ExecuteCommand(InsertCoin)
+	executeFsmCommand(&fsm, InsertCoin, Unlocked)
 	fmt.Println("Fsm Current State ", fsm.State)
 
 	printSectionBreak()
-	fmt.Println("Execute command InsertCoin from Unlocked -> expected state : ", Unlocked)
-
-	fsm.ExecuteCommand(InsertCoin)
+	executeFsmCommand(&fsm, InsertCoin, Unlocked)
 	fmt.Println("Fsm Current State ", fsm.State)
 
 	printSectionBreak()
-	fmt.Println("Execute command PushButton from Unlocked -> expected state : ", Locked)
-
-	fsm.ExecuteCommand(PushButton)
+	executeFsmCommand(&fsm, PushButton, Locked)
 	fmt.Println("Fsm Current State ", fsm.State)
 
 	printSectionBreak()
-	fmt.Println("Execute command PushButton from Locked -> expected state : ", Locked)
-
-	fsm.ExecuteCommand(PushButton)
+	executeFsmCommand(&fsm, PushButton, Locked)
 	fmt.Println("Fsm Current State ", fsm.State)
-
 }
