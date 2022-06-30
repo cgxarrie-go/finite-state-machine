@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/cgxarrie/fsm-go/fsm"
+	"github.com/cgxarrie/fsm-go/fsm/commands"
+	"github.com/cgxarrie/fsm-go/fsm/states"
 )
 
 func printSectionBreak() {
@@ -11,7 +13,7 @@ func printSectionBreak() {
 	fmt.Println("--------------------------------------")
 }
 
-func printCommandExecuted(executed bool, command fsm.Command, from fsm.State) {
+func printCommandExecuted(executed bool, command commands.Command, from states.State) {
 	if executed {
 		msg := fmt.Sprintf("Transition found for Command %s From State %s", command, from)
 		fmt.Println(msg)
@@ -22,7 +24,7 @@ func printCommandExecuted(executed bool, command fsm.Command, from fsm.State) {
 	}
 }
 
-func executeFsmCommand(fsm *fsm.StateMachine, command fsm.Command, expectedState fsm.State) {
+func executeFsmCommand(fsm *fsm.StateMachine, command commands.Command, expectedState states.State) {
 	initialState := fsm.State
 	msg := fmt.Sprintf("Execute command %s from %s -> expected state : %s", command, fsm.State, expectedState)
 	fmt.Println(msg)
@@ -42,24 +44,24 @@ func printFsmTransitions(fsm fsm.StateMachine) {
 func main() {
 	printSectionBreak()
 	fmt.Println("Initialize state machine")
-	fsm := fsm.New()
+	sm := fsm.New()
 
-	fmt.Println("Fsm Current State ", fsm.State)
-	printFsmTransitions(fsm)
-
-	printSectionBreak()
-	executeFsmCommand(&fsm, fsm.InsertCoin, fsm.Unlocked)
-	fmt.Println("Fsm Current State ", fsm.State)
+	fmt.Println("Fsm Current State ", sm.State)
+	printFsmTransitions(sm)
 
 	printSectionBreak()
-	executeFsmCommand(&fsm, fsm.InsertCoin, fsm.Unlocked)
-	fmt.Println("Fsm Current State ", fsm.State)
+	executeFsmCommand(&sm, commands.InsertCoin, states.Unlocked)
+	fmt.Println("Fsm Current State ", sm.State)
 
 	printSectionBreak()
-	executeFsmCommand(&fsm, fsm.PushButton, fsm.Locked)
-	fmt.Println("Fsm Current State ", fsm.State)
+	executeFsmCommand(&sm, commands.InsertCoin, states.Unlocked)
+	fmt.Println("Fsm Current State ", sm.State)
 
 	printSectionBreak()
-	executeFsmCommand(&fsm, fsm.PushButton, fsm.Locked)
-	fmt.Println("Fsm Current State ", fsm.State)
+	executeFsmCommand(&sm, commands.PushButton, states.Locked)
+	fmt.Println("Fsm Current State ", sm.State)
+
+	printSectionBreak()
+	executeFsmCommand(&sm, commands.PushButton, states.Locked)
+	fmt.Println("Fsm Current State ", sm.State)
 }

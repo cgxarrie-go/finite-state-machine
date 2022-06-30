@@ -1,40 +1,51 @@
 package fsm
 
-type State uint32
-
-const (
-	Locked State = iota
-	Unlocked
+import (
+	"github.com/cgxarrie/fsm-go/fsm/commands"
+	"github.com/cgxarrie/fsm-go/fsm/states"
 )
-
-type Command uint32
-
-const (
-	InsertCoin Command = iota
-	PushButton
-)
-
-type Transition struct {
-	From    State
-	Command Command
-	To      State
-}
 
 type StateMachine struct {
-	State       State
-	Transitions [2]Transition
+	State       states.State
+	Transitions []Transition
 }
 
 func New() StateMachine {
 	fsm := &StateMachine{}
-	fsm.State = Locked
-	fsm.Transitions[0] = Transition{From: Locked, Command: InsertCoin, To: Unlocked}
-	fsm.Transitions[1] = Transition{From: Unlocked, Command: PushButton, To: Locked}
+	fsm.State = states.Locked
+
+	fsm.AddTransition(states.Locked, commands.InsertCoin, states.Unlocked)
+	fsm.AddTransition(states.Unlocked, commands.PushButton, states.Locked)
 
 	return *fsm
 }
 
-func (fsm *StateMachine) ExecuteCommand(command Command) bool {
+func (fsm *StateMachine) AddTransition(from states.State, command commands.Command, to states.State) bool {
+
+	_, exists := fsm.transitionExists(command)
+
+	if exists {
+		return false
+	}
+
+	fsm.Transitions = append(fsm.Transitions, Transition{From: from, Command: command, To: to})
+	return true
+}
+
+func (fsm *StateMachine) ExecuteCommand(command commands.Command) bool {
+
+	transition, exists := fsm.transitionExists(command)
+
+	if !exists {
+		return false
+	}
+
+	fsm.State = transition.To
+	return true
+}
+
+func (fsm StateMachine) transitionExists(command commands.Command) (Transition, bool) {
+
 	for _, transition := range fsm.Transitions {
 
 		if transition.From != fsm.State || transition.Command != command {
@@ -42,10 +53,9 @@ func (fsm *StateMachine) ExecuteCommand(command Command) bool {
 		}
 
 		if transition.From == fsm.State && transition.Command == command {
-			fsm.State = transition.To
-			return true
+			return transition, true
 		}
 	}
 
-	return false
+	return Transition{"", "", ""}, false
 }
