@@ -1,23 +1,18 @@
 package fsm
 
-import (
-	"github.com/cgxarrie/fsm-go/fsm/commands"
-	"github.com/cgxarrie/fsm-go/fsm/states"
-)
-
 type StateMachine struct {
-	State       states.State
+	State       State
 	Transitions []Transition
 }
 
-func New(initialState states.State) StateMachine {
+func New(initialState State) StateMachine {
 	fsm := &StateMachine{}
 	fsm.State = initialState
 
 	return *fsm
 }
 
-func (fsm *StateMachine) AddTransition(from states.State, command commands.Command, to states.State) bool {
+func (fsm *StateMachine) AddTransition(from State, command Command, to State) bool {
 
 	transition := fsm.findTransition(command)
 	if transition != nil {
@@ -28,18 +23,22 @@ func (fsm *StateMachine) AddTransition(from states.State, command commands.Comma
 	return true
 }
 
-func (fsm *StateMachine) ExecuteCommand(command commands.Command) bool {
+func (fsm *StateMachine) ExecuteCommand(command Command) *CommandNotAvailableError {
 
 	transition := fsm.findTransition(command)
 	if transition == nil {
-		return false
+		err := &CommandNotAvailableError{
+			FromState: fsm.State,
+			Command:   command,
+		}
+		return err
 	}
 
 	fsm.State = transition.To
-	return true
+	return nil
 }
 
-func (fsm StateMachine) findTransition(command commands.Command) *Transition {
+func (fsm StateMachine) findTransition(command Command) *Transition {
 
 	for _, transition := range fsm.Transitions {
 
