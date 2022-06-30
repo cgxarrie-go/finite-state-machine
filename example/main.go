@@ -44,7 +44,9 @@ func printFsmTransitions(fsm fsm.StateMachine) {
 func main() {
 	printSectionBreak()
 	fmt.Println("Initialize state machine")
-	sm := fsm.New()
+	sm := fsm.New(states.Locked)
+	sm.AddTransition(states.Locked, commands.InsertCoin, states.Unlocked)
+	sm.AddTransition(states.Unlocked, commands.PushButton, states.Locked)
 
 	fmt.Println("Fsm Current State ", sm.State)
 	printFsmTransitions(sm)

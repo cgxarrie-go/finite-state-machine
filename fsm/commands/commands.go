@@ -1,8 +1,8 @@
 package commands
 
-type Command string
+type Command uint32
 
 const (
-	InsertCoin Command = "InsertCoin"
-	PushButton         = "PushButton"
+	InsertCoin Command = iota
+	PushButton
 )

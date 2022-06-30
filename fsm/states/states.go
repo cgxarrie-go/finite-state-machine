@@ -1,8 +1,8 @@
 package states
 
-type State string
+type State uint32
 
 const (
-	Locked   State = "Locked"
-	Unlocked       = "Unlocked"
+	Locked State = iota
+	Unlocked
 )

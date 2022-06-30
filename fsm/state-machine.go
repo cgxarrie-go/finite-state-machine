@@ -10,21 +10,17 @@ type StateMachine struct {
 	Transitions []Transition
 }
 
-func New() StateMachine {
+func New(initialState states.State) StateMachine {
 	fsm := &StateMachine{}
-	fsm.State = states.Locked
-
-	fsm.AddTransition(states.Locked, commands.InsertCoin, states.Unlocked)
-	fsm.AddTransition(states.Unlocked, commands.PushButton, states.Locked)
+	fsm.State = initialState
 
 	return *fsm
 }
 
 func (fsm *StateMachine) AddTransition(from states.State, command commands.Command, to states.State) bool {
 
-	_, exists := fsm.transitionExists(command)
-
-	if exists {
+	transition := fsm.findTransition(command)
+	if transition != nil {
 		return false
 	}
 
@@ -34,9 +30,8 @@ func (fsm *StateMachine) AddTransition(from states.State, command commands.Comma
 
 func (fsm *StateMachine) ExecuteCommand(command commands.Command) bool {
 
-	transition, exists := fsm.transitionExists(command)
-
-	if !exists {
+	transition := fsm.findTransition(command)
+	if transition == nil {
 		return false
 	}
 
@@ -44,7 +39,7 @@ func (fsm *StateMachine) ExecuteCommand(command commands.Command) bool {
 	return true
 }
 
-func (fsm StateMachine) transitionExists(command commands.Command) (Transition, bool) {
+func (fsm StateMachine) findTransition(command commands.Command) *Transition {
 
 	for _, transition := range fsm.Transitions {
 
@@ -53,9 +48,9 @@ func (fsm StateMachine) transitionExists(command commands.Command) (Transition, 
 		}
 
 		if transition.From == fsm.State && transition.Command == command {
-			return transition, true
+			return &transition
 		}
 	}
 
-	return Transition{"", "", ""}, false
+	return nil
 }
