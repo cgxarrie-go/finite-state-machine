@@ -1,5 +1,9 @@
 package fsm
 
+type State uint32
+
+type Command uint32
+
 type StateMachine struct {
 	State       State
 	Transitions []Transition
