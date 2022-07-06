@@ -77,6 +77,7 @@ func TestExecuteCommandWhenTransitionExistsShouldExecute(t *testing.T) {
 func TestExecuteCommandWhenTransitionDoesNotExistShouldReturnCommandNotAvailableError(t *testing.T) {
 	sm := New(Locked)
 	sm.AddTransition(Locked, InsertCoin, Unlocked)
+	sm.AddTransition(Unlocked, PushButton, Locked)
 
 	err := sm.ExecuteCommand(PushButton)
 

@@ -24,7 +24,6 @@ func (fsm *StateMachine) AddTransition(from State, command Command, to State) bo
 }
 
 func (fsm *StateMachine) ExecuteCommand(command Command) *CommandNotAvailableError {
-
 	transition := fsm.findTransition(command)
 	if transition == nil {
 		err := &CommandNotAvailableError{
