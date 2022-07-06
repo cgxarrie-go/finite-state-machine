@@ -4,6 +4,12 @@ type State uint32
 
 type Command uint32
 
+type Transition struct {
+	From    State
+	Command Command
+	To      State
+}
+
 type StateMachine struct {
 	State       State
 	Transitions []Transition
