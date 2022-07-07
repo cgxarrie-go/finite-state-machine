@@ -1,5 +1,7 @@
 package fsm
 
+import "fmt"
+
 type State uint32
 
 type Command uint32
@@ -24,8 +26,8 @@ func New(initialState State) StateMachine {
 
 func (fsm *StateMachine) AddTransition(from State, command Command, to State) bool {
 
-	transition := fsm.findTransition(command)
-	if transition != nil {
+	_, err := fsm.findTransition(command)
+	if err != nil {
 		return false
 	}
 
@@ -33,21 +35,18 @@ func (fsm *StateMachine) AddTransition(from State, command Command, to State) bo
 	return true
 }
 
-func (fsm *StateMachine) ExecuteCommand(command Command) *CommandNotAvailableError {
-	transition := fsm.findTransition(command)
-	if transition == nil {
-		err := &CommandNotAvailableError{
-			FromState: fsm.State,
-			Command:   command,
-		}
-		return err
+func (fsm *StateMachine) ExecuteCommand(command Command) (bool, error) {
+	transition, err := fsm.findTransition(command)
+
+	if err != nil {
+		return false, err
 	}
 
 	fsm.State = transition.To
-	return nil
+	return true, nil
 }
 
-func (fsm StateMachine) findTransition(command Command) *Transition {
+func (fsm StateMachine) findTransition(command Command) (*Transition, error) {
 
 	for _, transition := range fsm.Transitions {
 
@@ -56,9 +55,9 @@ func (fsm StateMachine) findTransition(command Command) *Transition {
 		}
 
 		if transition.From == fsm.State && transition.Command == command {
-			return &transition
+			return &transition, nil
 		}
 	}
 
-	return nil
+	return nil, fmt.Errorf("Transition not found : Command%d from status %d", command, fsm.State)
 }

@@ -63,7 +63,7 @@ func TestExecuteCommandWhenTransitionExistsShouldExecute(t *testing.T) {
 	sm := New(Locked)
 	sm.AddTransition(Locked, InsertCoin, Unlocked)
 
-	err := sm.ExecuteCommand(InsertCoin)
+	_, err := sm.ExecuteCommand(InsertCoin)
 
 	if err != nil {
 		t.Errorf("Command not executed")
@@ -79,27 +79,18 @@ func TestExecuteCommandWhenTransitionDoesNotExistShouldReturnCommandNotAvailable
 	sm.AddTransition(Locked, InsertCoin, Unlocked)
 	sm.AddTransition(Unlocked, PushButton, Locked)
 
-	err := sm.ExecuteCommand(PushButton)
+	_, err := sm.ExecuteCommand(PushButton)
 
 	if err == nil {
-		t.Errorf("Expected to receive error of type")
+		t.Errorf("Expected to receive error")
 		return
 	}
-
-	if err.Command != PushButton {
-		t.Errorf("Unexpected error Command: Got %d, expected %d", err.Command, PushButton)
-	}
-
-	if err.FromState != Locked {
-		t.Errorf("Unexpected error FromState: Got %d, expected %d", err.FromState, Locked)
-	}
-
 }
 
 func TestExecuteCommandWhenTransitionsAreEmptyShouldNotExecute(t *testing.T) {
 	sm := New(Locked)
 
-	err := sm.ExecuteCommand(PushButton)
+	_, err := sm.ExecuteCommand(PushButton)
 
 	if err == nil {
 		t.Errorf("Command executed")
