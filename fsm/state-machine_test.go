@@ -17,12 +17,12 @@ const (
 func TestNewShouldReturnStateMachineInInitialStatusAndNoTransitions(t *testing.T) {
 
 	sm := New(Locked)
-	if sm.State != Locked {
-		t.Errorf("Incorrect initial status: Got: %d, expected %d", sm.State, Locked)
+	if expected, got := Locked, sm.State; expected != got {
+		t.Errorf("Incorrect initial status: Got: %v, expected %v", sm.State, Locked)
 	}
 
-	if len(sm.Transitions) != 0 {
-		t.Errorf("Incorrect initial Transitions lengh: Got: %d, expected %d", len(sm.Transitions), 0)
+	if expected, got := 0, len(sm.Transitions); expected != got {
+		t.Errorf("Incorrect initial Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 0)
 	}
 }
 
@@ -31,20 +31,20 @@ func TestAddTransitionShouldAddTransitionWhenTransitionDoesNotExist(t *testing.T
 	sm := New(Locked)
 	sm.AddTransition(Locked, InsertCoin, Unlocked)
 
-	if len(sm.Transitions) != 1 {
-		t.Errorf("Incorrect Transitions lengh: Got: %d, expected %d", len(sm.Transitions), 1)
+	if expected, got := 1, len(sm.Transitions); expected != got {
+		t.Errorf("Incorrect Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 1)
 	}
 
-	if sm.Transitions[0].From != Locked {
-		t.Errorf("Incorrect added transitions From: Got: %d, expected %d", sm.Transitions[0].From, Locked)
+	if expected, got := Locked, sm.Transitions[0].From; expected != got {
+		t.Errorf("Incorrect added transitions From: Got: %v, expected %v", got, expected)
 	}
 
-	if sm.Transitions[0].To != Unlocked {
-		t.Errorf("Incorrect added transitions To: Got: %d, expected %d", sm.Transitions[0].To, Unlocked)
+	if expected, got := Unlocked, sm.Transitions[0].To; expected != got {
+		t.Errorf("Incorrect added transitions To: Got: %v, expected %v", got, expected)
 	}
 
-	if sm.Transitions[0].Command != InsertCoin {
-		t.Errorf("Incorrect added transitions Command: Got: %d, expected %d", sm.Transitions[0].Command, InsertCoin)
+	if expected, got := InsertCoin, sm.Transitions[0].Command; expected != got {
+		t.Errorf("Incorrect added transitions Command: Got: %v, expected %v", got, expected)
 	}
 }
 
@@ -54,8 +54,8 @@ func TestAddTransitionShouldNotAddTransitionWhenTransitionExists(t *testing.T) {
 	sm.AddTransition(Locked, InsertCoin, Unlocked)
 	sm.AddTransition(Locked, InsertCoin, Unlocked)
 
-	if len(sm.Transitions) != 1 {
-		t.Errorf("Incorrect Transitions lengh: Got: %d, expected %d", len(sm.Transitions), 1)
+	if expected, got := 1, len(sm.Transitions); expected != got {
+		t.Errorf("Incorrect Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 1)
 	}
 }
 
@@ -69,8 +69,8 @@ func TestExecuteCommandWhenTransitionExistsShouldExecute(t *testing.T) {
 		t.Errorf("Command not executed")
 	}
 
-	if sm.State != Unlocked {
-		t.Errorf("Incorrect status : Got: %d, expected %d", sm.State, Unlocked)
+	if expected, got := Unlocked, sm.State; expected != got {
+		t.Errorf("Incorrect status : Got: %v, expected %v", sm.State, Unlocked)
 	}
 }
 
@@ -96,7 +96,7 @@ func TestExecuteCommandWhenTransitionsAreEmptyShouldNotExecute(t *testing.T) {
 		t.Errorf("Command executed")
 	}
 
-	if sm.State != Locked {
-		t.Errorf("Incorrect status : Got: %d, expected %d", sm.State, Locked)
+	if expected, got := Locked, sm.State; expected != got {
+		t.Errorf("Incorrect status : Got: %v, expected %v", sm.State, Locked)
 	}
 }
