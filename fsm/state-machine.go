@@ -27,7 +27,7 @@ func New(initialState State) StateMachine {
 func (fsm *StateMachine) AddTransition(from State, command Command, to State) bool {
 
 	_, err := fsm.findTransition(command)
-	if err != nil {
+	if err == nil {
 		return false
 	}
 
