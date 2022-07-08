@@ -1,69 +1,101 @@
-package invoiceFsm
+package fsm
 
 import (
 	"fmt"
 	"testing"
-
-	"github.com/cgxarrie/fsm-go/fsm"
 )
 
-func TestNewInvoiceStateMachineShouldInitialize(t *testing.T) {
-	sm := NewInvoiceStateMachine()
+const (
+	InsertCoin Command = iota
+	PushButton
+)
 
-	if sm.State != fsm.State(InvoiceStateDraft) {
-		t.Errorf("Unexpected initial state: Got %d , expected %d", sm.State, InvoiceStateDraft)
+const (
+	Locked State = iota
+	Unlocked
+)
+
+func TestNewShouldReturnStateMachineInInitialStatusAndNoTransitions(t *testing.T) {
+
+	sm := New(Locked)
+	if expected, got := Locked, sm.State; expected != got {
+		t.Errorf("Incorrect initial status: Got: %v, expected %v", sm.State, Locked)
+	}
+
+	if expected, got := 0, len(sm.Transitions); expected != got {
+		t.Errorf("Incorrect initial Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 0)
 	}
 }
 
-var commandTests = []struct {
-	command       InvoiceCommand
-	fromState     InvoiceState
-	toState       InvoiceState
-	expectedError bool
-}{
-	{InvoiceCommandConfirm, InvoiceStateDraft, InvoiceStateWaitingForApproval, false},
-	{InvoiceCommandConfirm, InvoiceStateWaitingForApproval, InvoiceStateWaitingForApproval, true},
-	{InvoiceCommandConfirm, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandConfirm, InvoiceStateCompleted, InvoiceStateCompleted, true},
-	{InvoiceCommandConfirm, InvoiceStateWaitingForPayment, InvoiceStateWaitingForPayment, true},
-	{InvoiceCommandReject, InvoiceStateDraft, InvoiceStateDraft, true},
-	{InvoiceCommandReject, InvoiceStateWaitingForApproval, InvoiceStateRejected, false},
-	{InvoiceCommandReject, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandReject, InvoiceStateWaitingForPayment, InvoiceStateWaitingForPayment, true},
-	{InvoiceCommandReject, InvoiceStateCompleted, InvoiceStateCompleted, true},
-	{InvoiceCommandApprove, InvoiceStateDraft, InvoiceStateDraft, true},
-	{InvoiceCommandApprove, InvoiceStateWaitingForApproval, InvoiceStateWaitingForPayment, false},
-	{InvoiceCommandApprove, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandApprove, InvoiceStateWaitingForPayment, InvoiceStateWaitingForPayment, true},
-	{InvoiceCommandApprove, InvoiceStateCompleted, InvoiceStateCompleted, true},
-	{InvoiceCommandPay, InvoiceStateDraft, InvoiceStateDraft, true},
-	{InvoiceCommandPay, InvoiceStateWaitingForApproval, InvoiceStateWaitingForApproval, true},
-	{InvoiceCommandPay, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandPay, InvoiceStateWaitingForPayment, InvoiceStateCompleted, false},
-	{InvoiceCommandPay, InvoiceStateCompleted, InvoiceStateCompleted, true},
+func TestAddTransitionShouldAddTransitionWhenTransitionDoesNotExist(t *testing.T) {
+
+	sm := New(Locked)
+	sm.AddTransition(Locked, InsertCoin, Unlocked)
+
+	if expected, got := 1, len(sm.Transitions); expected != got {
+		t.Errorf("Incorrect Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 1)
+	}
+
+	expectedTransitions := map[Command]map[State]State{
+		InsertCoin: {
+			Locked: Unlocked,
+		},
+	}
+
+	if expected, got := fmt.Sprint(expectedTransitions), fmt.Sprint(sm.Transitions); expected != got {
+		t.Errorf("Unexpected transitions. Expected: %v but got: %v", expected, got)
+	}
 }
 
-func TestExecuteCommandShouldBehaveAsExpected(t *testing.T) {
-	for _, data := range commandTests {
-		sm := NewInvoiceStateMachine()
-		sm.State = fsm.State(data.fromState)
+func TestAddTransitionShouldNotAddTransitionWhenTransitionExists(t *testing.T) {
 
-		_, err := sm.ExecuteCommand(fsm.Command(data.command))
+	sm := New(Locked)
+	sm.AddTransition(Locked, InsertCoin, Unlocked)
+	sm.AddTransition(Locked, InsertCoin, Unlocked)
 
-		if data.expectedError {
-			if err == nil {
-				t.Errorf("Command %s from State %s should throw error", fmt.Sprint(data.command), fmt.Sprint(data.fromState))
-				continue
-			}
-		} else {
-			if err != nil {
-				t.Errorf("Command %s from State %s thrown error : %v", fmt.Sprint(data.command), fmt.Sprint(data.fromState), err)
-				continue
-			}
+	if expected, got := 1, len(sm.Transitions); expected != got {
+		t.Errorf("Incorrect Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 1)
+	}
+}
 
-			if sm.State != fsm.State(data.toState) {
-				t.Errorf("Command %s from State %s should change state to %s", fmt.Sprint(data.command), fmt.Sprint(data.fromState), fmt.Sprint(data.toState))
-			}
-		}
+func TestExecuteCommandWhenTransitionExistsShouldExecute(t *testing.T) {
+	sm := New(Locked)
+	sm.AddTransition(Locked, InsertCoin, Unlocked)
+
+	_, err := sm.ExecuteCommand(InsertCoin)
+
+	if err != nil {
+		t.Errorf("Command not executed")
+	}
+
+	if expected, got := Unlocked, sm.State; expected != got {
+		t.Errorf("Incorrect status : Got: %v, expected %v", sm.State, Unlocked)
+	}
+}
+
+func TestExecuteCommandWhenTransitionDoesNotExistShouldReturnCommandNotAvailableError(t *testing.T) {
+	sm := New(Locked)
+	sm.AddTransition(Locked, InsertCoin, Unlocked)
+	sm.AddTransition(Unlocked, PushButton, Locked)
+
+	_, err := sm.ExecuteCommand(PushButton)
+
+	if err == nil {
+		t.Errorf("Expected to receive error")
+		return
+	}
+}
+
+func TestExecuteCommandWhenTransitionsAreEmptyShouldNotExecute(t *testing.T) {
+	sm := New(Locked)
+
+	_, err := sm.ExecuteCommand(PushButton)
+
+	if err == nil {
+		t.Errorf("Command executed")
+	}
+
+	if expected, got := Locked, sm.State; expected != got {
+		t.Errorf("Incorrect status : Got: %v, expected %v", sm.State, Locked)
 	}
 }
