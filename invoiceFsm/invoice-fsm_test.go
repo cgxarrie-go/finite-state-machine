@@ -13,38 +13,6 @@ func TestNewInvoiceStateMachineShouldInitialize(t *testing.T) {
 	if sm.State != fsm.State(InvoiceStateDraft) {
 		t.Errorf("Unexpected initial state: Got %d , expected %d", sm.State, InvoiceStateDraft)
 	}
-
-	for i := 0; i < len(sm.Transitions); i++ {
-
-		transition := sm.Transitions[i]
-
-		if transition.From == fsm.State(InvoiceStateDraft) &&
-			transition.Command == fsm.Command(InvoiceCommandConfirm) &&
-			transition.To == fsm.State(InvoiceStateWaitingForApproval) {
-			continue
-		}
-		if transition.From == fsm.State(InvoiceStateWaitingForApproval) &&
-			transition.Command == fsm.Command(InvoiceCommandReject) &&
-			transition.To == fsm.State(InvoiceStateRejected) {
-			continue
-		}
-		if transition.From == fsm.State(InvoiceStateWaitingForApproval) &&
-			transition.Command == fsm.Command(InvoiceCommandApprove) &&
-			transition.To == fsm.State(InvoiceStateWaitingForPayment) {
-			continue
-		}
-		if transition.From == fsm.State(InvoiceStateWaitingForPayment) &&
-			transition.Command == fsm.Command(InvoiceCommandPay) &&
-			transition.To == fsm.State(InvoiceStateCompleted) {
-			continue
-		}
-
-		t.Errorf("Unexpected transitions found From %s Command %s To %s", fmt.Sprint(transition.From), fmt.Sprint(transition.Command), fmt.Sprint(transition.To))
-	}
-
-	if len(sm.Transitions) != 4 {
-		t.Errorf("Unexpected initial transitions count : Got %d , expected %d", len(sm.Transitions), 4)
-	}
 }
 
 var commandTests = []struct {
@@ -80,7 +48,7 @@ func TestExecuteCommandShouldBehaveAsExpected(t *testing.T) {
 		sm := NewInvoiceStateMachine()
 		sm.State = fsm.State(data.fromState)
 
-		err := sm.ExecuteCommand(fsm.Command(data.command))
+		_, err := sm.ExecuteCommand(fsm.Command(data.command))
 
 		if data.expectedError {
 			if err == nil {
@@ -89,7 +57,7 @@ func TestExecuteCommandShouldBehaveAsExpected(t *testing.T) {
 			}
 		} else {
 			if err != nil {
-				t.Errorf("Command %s from State %s thrown error", fmt.Sprint(data.command), fmt.Sprint(data.fromState))
+				t.Errorf("Command %s from State %s thrown error : %v", fmt.Sprint(data.command), fmt.Sprint(data.fromState), err)
 				continue
 			}
 
