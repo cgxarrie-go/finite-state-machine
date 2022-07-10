@@ -6,18 +6,22 @@ import (
 
 type InvoiceState fsm.State
 
-const InvoiceStateDraft InvoiceState = 0
-const InvoiceStateWaitingForApproval InvoiceState = 1
-const InvoiceStateWaitingForPayment InvoiceState = 2
-const InvoiceStateRejected InvoiceState = 3
-const InvoiceStateCompleted InvoiceState = 4
+const (
+	InvoiceStateDraft InvoiceState = iota
+	InvoiceStateWaitingForApproval
+	InvoiceStateWaitingForPayment
+	InvoiceStateRejected
+	InvoiceStateCompleted
+)
 
 type InvoiceCommand fsm.Command
 
-const InvoiceCommandConfirm InvoiceCommand = 0
-const InvoiceCommandReject InvoiceCommand = 1
-const InvoiceCommandApprove InvoiceCommand = 2
-const InvoiceCommandPay InvoiceCommand = 3
+const (
+	InvoiceCommandConfirm InvoiceCommand = iota
+	InvoiceCommandReject
+	InvoiceCommandApprove
+	InvoiceCommandPay
+)
 
 func NewInvoiceStateMachine() fsm.StateMachine {
 
