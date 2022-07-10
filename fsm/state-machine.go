@@ -22,7 +22,7 @@ func New(initialState State) StateMachine {
 	return *fsm
 }
 
-func (fsm *StateMachine) AddTransition(from State, command Command, to State) bool {
+func (fsm *StateMachine) AddTransition(command Command, from State, to State) bool {
 
 	if fsm.Transitions == nil {
 		fsm.Transitions = transition{

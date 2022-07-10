@@ -26,10 +26,10 @@ const (
 func NewInvoiceStateMachine() fsm.StateMachine {
 
 	sm := fsm.New(fsm.State(InvoiceStateDraft))
-	sm.AddTransition(fsm.State(InvoiceStateDraft), fsm.Command(InvoiceCommandConfirm), fsm.State(InvoiceStateWaitingForApproval))
-	sm.AddTransition(fsm.State(InvoiceStateWaitingForApproval), fsm.Command(InvoiceCommandReject), fsm.State(InvoiceStateRejected))
-	sm.AddTransition(fsm.State(InvoiceStateWaitingForApproval), fsm.Command(InvoiceCommandApprove), fsm.State(InvoiceStateWaitingForPayment))
-	sm.AddTransition(fsm.State(InvoiceStateWaitingForPayment), fsm.Command(InvoiceCommandPay), fsm.State(InvoiceStateCompleted))
+	sm.AddTransition(fsm.Command(InvoiceCommandConfirm), fsm.State(InvoiceStateDraft), fsm.State(InvoiceStateWaitingForApproval))
+	sm.AddTransition(fsm.Command(InvoiceCommandReject), fsm.State(InvoiceStateWaitingForApproval), fsm.State(InvoiceStateRejected))
+	sm.AddTransition(fsm.Command(InvoiceCommandApprove), fsm.State(InvoiceStateWaitingForApproval), fsm.State(InvoiceStateWaitingForPayment))
+	sm.AddTransition(fsm.Command(InvoiceCommandPay), fsm.State(InvoiceStateWaitingForPayment), fsm.State(InvoiceStateCompleted))
 
 	return sm
 }
