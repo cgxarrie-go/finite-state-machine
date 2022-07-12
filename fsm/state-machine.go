@@ -22,7 +22,7 @@ func New(initialState State) StateMachine {
 	return *fsm
 }
 
-func (fsm *StateMachine) AddTransition(command Command, from State, to State) bool {
+func (fsm *StateMachine) WithTransition(command Command, from State, to State) *StateMachine {
 
 	if fsm.Transitions == nil {
 		fsm.Transitions = transition{
@@ -30,24 +30,18 @@ func (fsm *StateMachine) AddTransition(command Command, from State, to State) bo
 				from: to,
 			},
 		}
-		return true
+		return fsm
 	}
 
 	_, commandExists := fsm.Transitions[command]
 
 	if !commandExists {
 		fsm.Transitions[command] = map[State]State{from: to}
-		return true
+		return fsm
 	}
 
-	_, fromStateExists := fsm.Transitions[command][from]
-
-	if !fromStateExists {
-		fsm.Transitions[command][from] = to
-		return true
-	}
-
-	return false
+	fsm.Transitions[command][from] = to
+	return fsm
 }
 
 func (fsm *StateMachine) ExecuteCommand(command Command) (bool, error) {
