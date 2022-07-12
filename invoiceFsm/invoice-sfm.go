@@ -7,29 +7,31 @@ import (
 type InvoiceState fsm.State
 
 const (
-	InvoiceStateDraft InvoiceState = iota
-	InvoiceStateWaitingForApproval
-	InvoiceStateWaitingForPayment
-	InvoiceStateRejected
-	InvoiceStateCompleted
+	draft InvoiceState = iota
+	waitingForApproval
+	waitingForPayment
+	rejected
+	completed
 )
 
 type InvoiceCommand fsm.Command
 
 const (
-	InvoiceCommandConfirm InvoiceCommand = iota
-	InvoiceCommandReject
-	InvoiceCommandApprove
-	InvoiceCommandPay
+	confirm InvoiceCommand = iota
+	reject
+	approve
+	pay
 )
 
 func NewInvoiceStateMachine() fsm.StateMachine {
 
-	sm := fsm.New(fsm.State(InvoiceStateDraft))
-	sm.AddTransition(fsm.Command(InvoiceCommandConfirm), fsm.State(InvoiceStateDraft), fsm.State(InvoiceStateWaitingForApproval))
-	sm.AddTransition(fsm.Command(InvoiceCommandReject), fsm.State(InvoiceStateWaitingForApproval), fsm.State(InvoiceStateRejected))
-	sm.AddTransition(fsm.Command(InvoiceCommandApprove), fsm.State(InvoiceStateWaitingForApproval), fsm.State(InvoiceStateWaitingForPayment))
-	sm.AddTransition(fsm.Command(InvoiceCommandPay), fsm.State(InvoiceStateWaitingForPayment), fsm.State(InvoiceStateCompleted))
+	sm := fsm.New(fsm.State(draft))
+
+	sm.
+		WithTransition().On(fsm.Command(confirm)).From(fsm.State(draft)).To(fsm.State(waitingForApproval)).Add().
+		WithTransition().On(fsm.Command(reject)).From(fsm.State(waitingForApproval)).To(fsm.State(rejected)).Add().
+		WithTransition().On(fsm.Command(approve)).From(fsm.State(waitingForApproval)).To(fsm.State(waitingForPayment)).Add().
+		WithTransition().On(fsm.Command(pay)).From(fsm.State(waitingForPayment)).To(fsm.State(completed)).Add()
 
 	return sm
 }

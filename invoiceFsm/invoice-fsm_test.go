@@ -10,8 +10,8 @@ import (
 func TestNewInvoiceStateMachineShouldInitialize(t *testing.T) {
 	sm := NewInvoiceStateMachine()
 
-	if sm.State != fsm.State(InvoiceStateDraft) {
-		t.Errorf("Unexpected initial state: Got %d , expected %d", sm.State, InvoiceStateDraft)
+	if sm.State != fsm.State(draft) {
+		t.Errorf("Unexpected initial state: Got %d , expected %d", sm.State, draft)
 	}
 }
 
@@ -21,26 +21,26 @@ var commandTests = []struct {
 	toState       InvoiceState
 	expectedError bool
 }{
-	{InvoiceCommandConfirm, InvoiceStateDraft, InvoiceStateWaitingForApproval, false},
-	{InvoiceCommandConfirm, InvoiceStateWaitingForApproval, InvoiceStateWaitingForApproval, true},
-	{InvoiceCommandConfirm, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandConfirm, InvoiceStateCompleted, InvoiceStateCompleted, true},
-	{InvoiceCommandConfirm, InvoiceStateWaitingForPayment, InvoiceStateWaitingForPayment, true},
-	{InvoiceCommandReject, InvoiceStateDraft, InvoiceStateDraft, true},
-	{InvoiceCommandReject, InvoiceStateWaitingForApproval, InvoiceStateRejected, false},
-	{InvoiceCommandReject, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandReject, InvoiceStateWaitingForPayment, InvoiceStateWaitingForPayment, true},
-	{InvoiceCommandReject, InvoiceStateCompleted, InvoiceStateCompleted, true},
-	{InvoiceCommandApprove, InvoiceStateDraft, InvoiceStateDraft, true},
-	{InvoiceCommandApprove, InvoiceStateWaitingForApproval, InvoiceStateWaitingForPayment, false},
-	{InvoiceCommandApprove, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandApprove, InvoiceStateWaitingForPayment, InvoiceStateWaitingForPayment, true},
-	{InvoiceCommandApprove, InvoiceStateCompleted, InvoiceStateCompleted, true},
-	{InvoiceCommandPay, InvoiceStateDraft, InvoiceStateDraft, true},
-	{InvoiceCommandPay, InvoiceStateWaitingForApproval, InvoiceStateWaitingForApproval, true},
-	{InvoiceCommandPay, InvoiceStateRejected, InvoiceStateRejected, true},
-	{InvoiceCommandPay, InvoiceStateWaitingForPayment, InvoiceStateCompleted, false},
-	{InvoiceCommandPay, InvoiceStateCompleted, InvoiceStateCompleted, true},
+	{confirm, draft, waitingForApproval, false},
+	{confirm, waitingForApproval, waitingForApproval, true},
+	{confirm, rejected, rejected, true},
+	{confirm, completed, completed, true},
+	{confirm, waitingForPayment, waitingForPayment, true},
+	{reject, draft, draft, true},
+	{reject, waitingForApproval, rejected, false},
+	{reject, rejected, rejected, true},
+	{reject, waitingForPayment, waitingForPayment, true},
+	{reject, completed, completed, true},
+	{approve, draft, draft, true},
+	{approve, waitingForApproval, waitingForPayment, false},
+	{approve, rejected, rejected, true},
+	{approve, waitingForPayment, waitingForPayment, true},
+	{approve, completed, completed, true},
+	{pay, draft, draft, true},
+	{pay, waitingForApproval, waitingForApproval, true},
+	{pay, rejected, rejected, true},
+	{pay, waitingForPayment, completed, false},
+	{pay, completed, completed, true},
 }
 
 func TestExecuteCommandShouldBehaveAsExpected(t *testing.T) {
