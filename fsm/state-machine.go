@@ -8,8 +8,6 @@ type State uint32
 
 type Command uint32
 
-type transition map[Command]map[State]State
-
 type StateMachine struct {
 	State       State
 	Transitions transition
@@ -22,26 +20,10 @@ func New(initialState State) StateMachine {
 	return *fsm
 }
 
-func (fsm *StateMachine) WithTransition(command Command, from State, to State) *StateMachine {
-
-	if fsm.Transitions == nil {
-		fsm.Transitions = transition{
-			command: {
-				from: to,
-			},
-		}
-		return fsm
-	}
-
-	_, commandExists := fsm.Transitions[command]
-
-	if !commandExists {
-		fsm.Transitions[command] = map[State]State{from: to}
-		return fsm
-	}
-
-	fsm.Transitions[command][from] = to
-	return fsm
+func (fsm *StateMachine) WithTransition() *TransitionBuilder {
+	tb := TransitionBuilder{}
+	tb.sm = fsm
+	return &tb
 }
 
 func (fsm *StateMachine) ExecuteCommand(command Command) (bool, error) {

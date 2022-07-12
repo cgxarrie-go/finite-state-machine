@@ -40,8 +40,7 @@ func TestNewShouldReturnStateMachineInInitialStatusAndNoTransitions(t *testing.T
 func TestAddTransitionShouldAddTransitionWhenTransitionDoesNotExist(t *testing.T) {
 
 	sm := New(locked)
-	sm.
-		WithTransition(insertCoin, locked, unlocked)
+	sm.WithTransition().On(insertCoin).From(locked).To(unlocked).Add()
 
 	if expected, got := 1, len(sm.Transitions); expected != got {
 		t.Errorf("Incorrect Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 1)
@@ -61,8 +60,9 @@ func TestAddTransitionShouldAddTransitionWhenTransitionDoesNotExist(t *testing.T
 func TestAddTransitionShouldNotAddTransitionWhenTransitionExists(t *testing.T) {
 
 	sm := New(locked)
-	sm.WithTransition(insertCoin, locked, unlocked).
-		WithTransition(insertCoin, locked, unlocked)
+	sm.
+		WithTransition().On(insertCoin).From(locked).To(unlocked).Add().
+		WithTransition().On(insertCoin).From(locked).To(unlocked).Add()
 
 	if expected, got := 1, len(sm.Transitions); expected != got {
 		t.Errorf("Incorrect Transitions lengh: Got: %v, expected %v", len(sm.Transitions), 1)
@@ -71,7 +71,7 @@ func TestAddTransitionShouldNotAddTransitionWhenTransitionExists(t *testing.T) {
 
 func TestExecuteCommandWhenTransitionExistsShouldExecute(t *testing.T) {
 	sm := New(locked)
-	sm.WithTransition(insertCoin, locked, unlocked)
+	sm.WithTransition().On(insertCoin).From(locked).To(unlocked).Add()
 
 	_, err := sm.ExecuteCommand(insertCoin)
 
@@ -86,8 +86,8 @@ func TestExecuteCommandWhenTransitionExistsShouldExecute(t *testing.T) {
 
 func TestExecuteCommandWhenTransitionDoesNotExistShouldReturnCommandNotAvailableError(t *testing.T) {
 	sm := New(locked)
-	sm.WithTransition(insertCoin, locked, unlocked).
-		WithTransition(pushButton, unlocked, locked)
+	sm.WithTransition().On(insertCoin).From(locked).To(unlocked).Add().
+		WithTransition().On(pushButton).From(unlocked).To(locked).Add()
 
 	_, err := sm.ExecuteCommand(pushButton)
 
