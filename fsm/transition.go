@@ -24,7 +24,7 @@ func (tb *TransitionBuilder) To(s State) *TransitionBuilder {
 	return tb
 }
 
-func (tb TransitionBuilder) Add() *StateMachine {
+func (tb TransitionBuilder) Build() {
 
 	if tb.sm.Transitions == nil {
 		tb.sm.Transitions = transition{
@@ -32,16 +32,13 @@ func (tb TransitionBuilder) Add() *StateMachine {
 				tb.from: tb.to,
 			},
 		}
-		return tb.sm
 	}
 
 	_, commandExists := tb.sm.Transitions[tb.onCommand]
 
 	if !commandExists {
 		tb.sm.Transitions[tb.onCommand] = map[State]State{tb.from: tb.to}
-		return tb.sm
 	}
 
 	tb.sm.Transitions[tb.onCommand][tb.from] = tb.to
-	return tb.sm
 }
