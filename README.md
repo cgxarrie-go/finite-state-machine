@@ -17,8 +17,9 @@ Valid transitions are added to the state machine on constructor via the followin
 ```go
         WithTransition().
             On(command). // On executing this command
-            From(state) // when the machine is in this state
-            .To(state); // then change to tis state
+            From(state). // when the machine is in this state
+            To(state). // then change to tis state
+            Build() //Build the transition and add it to the state machine
 ```
 
 
