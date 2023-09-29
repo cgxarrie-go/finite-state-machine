@@ -6,8 +6,6 @@ import (
 
 type State uint32
 
-type Command uint32
-
 type HandledElement interface {
 	SetState(State)
 	State() State
@@ -15,12 +13,12 @@ type HandledElement interface {
 
 type StateMachine struct {
 	element HandledElement
-	actions map[Command]*Action
+	commands map[string]*Command
 }
 
-type Action struct {
-	command     Command
-	fn    		func() error
+type Command struct {
+	name     string
+	action    		func() error
 	transitions map[State]*Transition
 }
 
@@ -42,29 +40,29 @@ func New(element HandledElement) StateMachine {
 	return *fsm
 }
 
-func (fsm *StateMachine) WithCommand(command Command, fn func() error) *Action {
-	if fsm.actions == nil {
-		fsm.actions = make(map[Command]*Action)
+func (fsm *StateMachine) WithCommand(name string, action func() error) *Command {
+	if fsm.commands == nil {
+		fsm.commands = make(map[string]*Command)
 	}
 
-	if action, ok := fsm.actions[command]; ok {
-		return action
+	if cmd, ok := fsm.commands[name]; ok {
+		return cmd
 	}
 
-	fsm.actions[command] = &Action{
-		fn: fn,
-		command:  command,
+	fsm.commands[name] = &Command{
+		action: action,
+		name:  name,
 	}
 
-	action := fsm.actions[command]
-	return action
+	cmd := fsm.commands[name]
+	return cmd
 }
 
-func (a *Action) WithTransition(from, to State) *Action {
+func (a *Command) WithTransition(from, to State) *Command {
 	return a.WithConditionedTransition(from, to, nil)
 }
 
-func (a *Action) WithConditionedTransition(from, to State, condition func() bool) *Action {
+func (a *Command) WithConditionedTransition(from, to State, condition func() bool) *Command {
 	if a.transitions == nil {
 		a.transitions = make(map[State]*Transition)
 	}
@@ -93,14 +91,14 @@ func (a *Action) WithConditionedTransition(from, to State, condition func() bool
 	return a
 }
 
-func (fsm *StateMachine) ExecuteCommand(command Command) error {
+func (fsm *StateMachine) ExecuteCommand(command string) error {
 
-	if fsm.actions == nil {
+	if fsm.commands == nil {
 		return fmt.Errorf("cannot execute requested command %v from state %v",
 			command, fsm.element.State())
 	}
 
-	action, ok := fsm.actions[command]
+	action, ok := fsm.commands[command]
 	if !ok {
 		return fmt.Errorf("cannot find action for command %v", command)
 	}
@@ -116,7 +114,7 @@ func (fsm *StateMachine) ExecuteCommand(command Command) error {
 			"and state %v", command, fsm.element)
 	}
 
-	err := action.fn()
+	err := action.action()
 	if err != nil {
 		return fmt.Errorf("command %v returned error: %v", command, err)
 	}

@@ -121,7 +121,7 @@ func Test_ConfirmCommand(t *testing.T) {
 			inv := NewInvoice(test.needSignature)
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
-			err := sm.ExecuteCommand(fsm.Command(confirm))
+			err := sm.ExecuteCommand("confirm")
 			if !test.wantError {
 				assert.NoError(t, err)
 				assert.Equal(t, fsm.State(test.to), inv.State())
@@ -246,7 +246,7 @@ func Test_ReceiveSignatureCommand(t *testing.T) {
 			inv := NewInvoice(test.needSignature)
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
-			err := sm.ExecuteCommand(fsm.Command(receiveSignature))
+			err := sm.ExecuteCommand("receiveSignature")
 			if !test.wantError {
 				assert.NoError(t, err)
 				assert.Equal(t, fsm.State(test.to), inv.State())
@@ -371,7 +371,7 @@ func Test_RejectCommand(t *testing.T) {
 			inv := NewInvoice(test.needSignature)
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
-			err := sm.ExecuteCommand(fsm.Command(reject))
+			err := sm.ExecuteCommand("reject")
 			if !test.wantError {
 				assert.NoError(t, err)
 				assert.Equal(t, fsm.State(test.to), inv.State())
@@ -496,7 +496,7 @@ func Test_ApproveCommand(t *testing.T) {
 			inv := NewInvoice(test.needSignature)
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
-			err := sm.ExecuteCommand(fsm.Command(approve))
+			err := sm.ExecuteCommand("approve")
 			if !test.wantError {
 				assert.NoError(t, err)
 				assert.Equal(t, fsm.State(test.to), inv.State())
@@ -621,7 +621,7 @@ func Test_PayCommand(t *testing.T) {
 			inv := NewInvoice(test.needSignature)
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
-			err := sm.ExecuteCommand(fsm.Command(pay))
+			err := sm.ExecuteCommand("pay")
 			if !test.wantError {
 				assert.NoError(t, err)
 				assert.Equal(t, fsm.State(test.to), inv.State())
@@ -746,7 +746,7 @@ func Test_AbandonCommand(t *testing.T) {
 			inv := NewInvoice(test.needSignature)
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
-			err := sm.ExecuteCommand(fsm.Command(abandon))
+			err := sm.ExecuteCommand("abandon")
 			if !test.wantError {
 				assert.NoError(t, err)
 				assert.Equal(t, fsm.State(test.to), inv.State())
