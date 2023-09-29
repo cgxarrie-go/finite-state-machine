@@ -35,7 +35,7 @@ func Test_Action_WithTransition_AddFirstTransition_ShouldAdd(t *testing.T) {
 		state3
 	)
 
-	action := Action{}
+	action := Command{}
 
 	// Act
 	action.WithTransition(state1, state2)
@@ -56,7 +56,7 @@ func Test_Action_WithConditionedTransition_AddFirstTransition_ShouldAdd(t *testi
 		state3
 	)
 
-	action := Action{}
+	action := Command{}
 
 	// Act
 	action.WithConditionedTransition(state1, state2, func() bool {return true})
@@ -77,7 +77,7 @@ func Test_Action_WithTransition_AddTargetToExistingTransition_ShouldAdd(t *testi
 		state3
 	)
 
-	action := Action{
+	action := Command{
 		transitions: map[State]*Transition{
 			state1: {
 				From: state1,
@@ -112,7 +112,7 @@ func Test_Action_WithTransition_AddExistingTargetToExistingTransition_ShouldNotA
 		state3
 	)
 
-	action := Action{
+	action := Command{
 		transitions: map[State]*Transition{
 			state1: {
 				From: state1,
@@ -149,21 +149,16 @@ func Test_StateMachine_WithCommand_ShouldAdd(t *testing.T) {
 		state3
 	)
 
-	const (
-		cmd1 Command = iota
-		cmd2
-		cmd3
-	)
 	element := testElement{state: state1}
 
 	fsm := New(&element)
 
 	// Act
-	fsm.WithCommand(cmd1, func() error {return nil})
+	fsm.WithCommand("Command1", element.Command1)
 
 	// Assert
-	assert.Len(t, fsm.actions, 1)
-	assert.Equal(t, cmd1, fsm.actions[cmd1].command)
+	assert.Len(t, fsm.commands, 1)
+	assert.Equal(t, "Command1", fsm.commands["Command1"].name)
 }
 
 func Test_StateMachine_WithCommand_WithTransition_ShouldAdd(t *testing.T) {
@@ -174,27 +169,22 @@ func Test_StateMachine_WithCommand_WithTransition_ShouldAdd(t *testing.T) {
 		state3
 	)
 
-	const (
-		cmd1 Command = iota
-		cmd2
-		cmd3
-	)
 
 	element := testElement{state: state1}
 
 	fsm := New(&element)
 
 	// Act
-	fsm.WithCommand(cmd1, func() error {return nil}).
+	fsm.WithCommand("cmd1", element.Command1).
 		WithTransition(state1, state2).
 		WithTransition(state1, state3)
 
 	// Assert
-	assert.Len(t, fsm.actions, 1)
-	assert.Equal(t, cmd1, fsm.actions[cmd1].command)
-	assert.Len(t, fsm.actions[cmd1].transitions, 1)
-	assert.Equal(t, state1, fsm.actions[cmd1].transitions[state1].From)
-	assert.Len(t, fsm.actions[cmd1].transitions[state1].Targets, 2)
-	assert.Equal(t, state2, fsm.actions[cmd1].transitions[state1].Targets[state2].To)
-	assert.Equal(t, state3, fsm.actions[cmd1].transitions[state1].Targets[state3].To)
+	assert.Len(t, fsm.commands, 1)
+	assert.Equal(t, "cmd1", fsm.commands["cmd1"].name)
+	assert.Len(t, fsm.commands["cmd1"].transitions, 1)
+	assert.Equal(t, state1, fsm.commands["cmd1"].transitions[state1].From)
+	assert.Len(t, fsm.commands["cmd1"].transitions[state1].Targets, 2)
+	assert.Equal(t, state2, fsm.commands["cmd1"].transitions[state1].Targets[state2].To)
+	assert.Equal(t, state3, fsm.commands["cmd1"].transitions[state1].Targets[state3].To)
 }
