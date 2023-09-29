@@ -2,7 +2,6 @@ package fsm
 
 import (
 	"fmt"
-	"reflect"
 )
 
 type State uint32
@@ -21,7 +20,7 @@ type StateMachine struct {
 
 type Action struct {
 	command     Command
-	funcName    string
+	fn    		func() error
 	transitions map[State]*Transition
 }
 
@@ -32,7 +31,7 @@ type Transition struct {
 
 type Target struct {
 	To       State
-	funcName string
+	condition func() bool
 }
 
 func New(element HandledElement) StateMachine {
@@ -43,7 +42,7 @@ func New(element HandledElement) StateMachine {
 	return *fsm
 }
 
-func (fsm *StateMachine) WithCommand(command Command, methodName string) *Action {
+func (fsm *StateMachine) WithCommand(command Command, fn func() error) *Action {
 	if fsm.actions == nil {
 		fsm.actions = make(map[Command]*Action)
 	}
@@ -53,7 +52,7 @@ func (fsm *StateMachine) WithCommand(command Command, methodName string) *Action
 	}
 
 	fsm.actions[command] = &Action{
-		funcName: methodName,
+		fn: fn,
 		command:  command,
 	}
 
@@ -62,10 +61,10 @@ func (fsm *StateMachine) WithCommand(command Command, methodName string) *Action
 }
 
 func (a *Action) WithTransition(from, to State) *Action {
-	return a.WithConditionedTransition(from, to, "")
+	return a.WithConditionedTransition(from, to, nil)
 }
 
-func (a *Action) WithConditionedTransition(from, to State, conditionFuncName string) *Action {
+func (a *Action) WithConditionedTransition(from, to State, condition func() bool) *Action {
 	if a.transitions == nil {
 		a.transitions = make(map[State]*Transition)
 	}
@@ -76,7 +75,7 @@ func (a *Action) WithConditionedTransition(from, to State, conditionFuncName str
 			Targets: map[State]*Target{
 				to: {
 					To:       to,
-					funcName: conditionFuncName,
+					condition: condition,
 				},
 			},
 		}
@@ -86,7 +85,7 @@ func (a *Action) WithConditionedTransition(from, to State, conditionFuncName str
 	if _, ok := a.transitions[from].Targets[to]; !ok {
 		a.transitions[from].Targets[to] = &Target{
 			To:       to,
-			funcName: conditionFuncName,
+			condition: condition,
 		}
 		return a
 	}
@@ -117,26 +116,14 @@ func (fsm *StateMachine) ExecuteCommand(command Command) error {
 			"and state %v", command, fsm.element)
 	}
 
-	meth := reflect.ValueOf(fsm.element).MethodByName(action.funcName)
-	if !fsm.isValidCommandFunc(meth.Interface()) {
-		return fmt.Errorf("method %v for command %v has wrong signature. "+
-			"It should be func() error", action.funcName, command)
-	}
-	err := fsm.runCommandFunc(meth)
+	err := action.fn()
 	if err != nil {
-		return fmt.Errorf("method %v for command %v returned error: %v",
-			action.funcName, command, err)
+		return fmt.Errorf("command %v returned error: %v", command, err)
 	}
 
 	for _, target := range transition.Targets {
-		if target.funcName != "" {
-			meth := reflect.ValueOf(fsm.element).MethodByName(target.funcName)
-			if !fsm.isValidTransitionConditionFunc(meth.Interface()) {
-				return fmt.Errorf("method %v for command %v has wrong "+
-					"signature. It should be func() bool", target.funcName,
-					command)
-			}
-			if !fsm.runTransitionConditionFunc(meth) {
+		if target.condition != nil {
+			if !target.condition() {
 				continue
 			}
 
@@ -150,51 +137,4 @@ func (fsm *StateMachine) ExecuteCommand(command Command) error {
 
 	return fmt.Errorf("cannot find executable transition for command %v "+
 		"and state %v", command, fsm.element.State())
-}
-
-func (fsm StateMachine) isValidCommandFunc(fn interface{}) bool {
-	fnType := reflect.TypeOf(fn)
-
-	if fnType.NumIn() != 0 {
-		return false
-	}
-
-	if fnType.NumOut() != 1 {
-		return false
-	}
-
-	return fnType.Out(0).AssignableTo(reflect.TypeOf((*error)(nil)).Elem())
-}
-
-func (fsm StateMachine) runCommandFunc(meth reflect.Value) error {
-	methResult := meth.Call(nil)
-	errorElement := reflect.TypeOf((*error)(nil)).Elem()
-	if len(methResult) > 0 && !methResult[0].IsNil() &&
-		methResult[0].Type().Implements(errorElement) {
-		return methResult[0].Interface().(error)
-	}
-	return nil
-}
-
-func (fsm StateMachine) isValidTransitionConditionFunc(fn interface{}) bool {
-	fnType := reflect.TypeOf(fn)
-
-	if fnType.NumIn() != 0 {
-		return false
-	}
-
-	if fnType.NumOut() != 1 {
-		return false
-	}
-
-	return fnType.Out(0).AssignableTo(reflect.TypeOf((*bool)(nil)).Elem())
-}
-
-func (fsm StateMachine) runTransitionConditionFunc(meth reflect.Value) bool {
-	methResult := meth.Call(nil)
-	if len(methResult) > 0 &&
-		methResult[0].Kind() == reflect.Bool {
-		return methResult[0].Bool()
-	}
-	return false
 }

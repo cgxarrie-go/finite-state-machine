@@ -45,7 +45,7 @@ func Test_Action_WithTransition_AddFirstTransition_ShouldAdd(t *testing.T) {
 	assert.Equal(t, state1, action.transitions[state1].From)
 	assert.Len(t, action.transitions[state1].Targets, 1)
 	assert.Equal(t, state2, action.transitions[state1].Targets[state2].To)
-	assert.Equal(t, "", action.transitions[state1].Targets[state2].funcName)
+	assert.Nil(t, action.transitions[state1].Targets[state2].condition)
 }
 
 func Test_Action_WithConditionedTransition_AddFirstTransition_ShouldAdd(t *testing.T) {
@@ -59,14 +59,14 @@ func Test_Action_WithConditionedTransition_AddFirstTransition_ShouldAdd(t *testi
 	action := Action{}
 
 	// Act
-	action.WithConditionedTransition(state1, state2, "condition-func")
+	action.WithConditionedTransition(state1, state2, func() bool {return true})
 
 	// Assert
 	assert.Len(t, action.transitions, 1)
 	assert.Equal(t, state1, action.transitions[state1].From)
 	assert.Len(t, action.transitions[state1].Targets, 1)
 	assert.Equal(t, state2, action.transitions[state1].Targets[state2].To)
-	assert.Equal(t, "condition-func", action.transitions[state1].Targets[state2].funcName)
+	assert.NotNil(t, action.transitions[state1].Targets[state2].condition)
 }
 
 func Test_Action_WithTransition_AddTargetToExistingTransition_ShouldAdd(t *testing.T) {
@@ -84,7 +84,7 @@ func Test_Action_WithTransition_AddTargetToExistingTransition_ShouldAdd(t *testi
 				Targets: map[State]*Target{
 					state2: {
 						To:       state2,
-						funcName: "condFunc1",
+						condition: func() bool {return true},
 					},
 				},
 			},
@@ -99,9 +99,9 @@ func Test_Action_WithTransition_AddTargetToExistingTransition_ShouldAdd(t *testi
 	assert.Equal(t, state1, action.transitions[state1].From)
 	assert.Len(t, action.transitions[state1].Targets, 2)
 	assert.Equal(t, state2, action.transitions[state1].Targets[state2].To)
-	assert.Equal(t, "condFunc1", action.transitions[state1].Targets[state2].funcName)
+	assert.NotNil(t, action.transitions[state1].Targets[state2].condition)
 	assert.Equal(t, state3, action.transitions[state1].Targets[state3].To)
-	assert.Equal(t, "", action.transitions[state1].Targets[state3].funcName)
+	assert.Nil(t, action.transitions[state1].Targets[state3].condition)
 }
 
 func Test_Action_WithTransition_AddExistingTargetToExistingTransition_ShouldNotAdd(t *testing.T) {
@@ -119,11 +119,11 @@ func Test_Action_WithTransition_AddExistingTargetToExistingTransition_ShouldNotA
 				Targets: map[State]*Target{
 					state2: {
 						To:       state2,
-						funcName: "",
+						condition: nil,
 					},
 					state3: {
 						To:       state3,
-						funcName: "",
+						condition: nil,
 					},
 				},
 			},
@@ -159,7 +159,7 @@ func Test_StateMachine_WithCommand_ShouldAdd(t *testing.T) {
 	fsm := New(&element)
 
 	// Act
-	fsm.WithCommand(cmd1, "Command1")
+	fsm.WithCommand(cmd1, func() error {return nil})
 
 	// Assert
 	assert.Len(t, fsm.actions, 1)
@@ -185,7 +185,7 @@ func Test_StateMachine_WithCommand_WithTransition_ShouldAdd(t *testing.T) {
 	fsm := New(&element)
 
 	// Act
-	fsm.WithCommand(cmd1, "Command1").
+	fsm.WithCommand(cmd1, func() error {return nil}).
 		WithTransition(state1, state2).
 		WithTransition(state1, state3)
 
