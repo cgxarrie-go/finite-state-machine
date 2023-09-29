@@ -87,27 +87,28 @@ func NewInvoiceStateMachine(invoice *Invoice) fsm.StateMachine {
 
 	sm := fsm.New(invoice)
 
-	sm.WithCommand(fsm.Command(abandon), "Abandon").
+	sm.WithCommand(fsm.Command(abandon), invoice.Abandon).
 		WithTransition(fsm.State(draft), fsm.State(abandoned)).
 		WithTransition(fsm.State(waitingForApproval), fsm.State(abandoned)).
 		WithTransition(fsm.State(waitingForsignature), fsm.State(abandoned)).
 		WithTransition(fsm.State(waitingForPayment), fsm.State(abandoned))
 
-	sm.WithCommand(fsm.Command(confirm), "Confirm").
+	sm.WithCommand(fsm.Command(confirm), invoice.Confirm).
 		WithTransition(fsm.State(draft), fsm.State(waitingForApproval))
 
-	sm.WithCommand(fsm.Command(approve), "Approve").
-		WithConditionedTransition(fsm.State(waitingForApproval), fsm.State(waitingForsignature), "NeedsSignature").
+	sm.WithCommand(fsm.Command(approve), invoice.Approve).
+		WithConditionedTransition(fsm.State(waitingForApproval), 
+			fsm.State(waitingForsignature), invoice.NeedsSignature).
 		WithTransition(fsm.State(waitingForApproval), fsm.State(waitingForPayment))
 
-	sm.WithCommand(fsm.Command(receiveSignature), "ReceiveSignature").
+	sm.WithCommand(fsm.Command(receiveSignature), invoice.ReceiveSignature).
 		WithTransition(fsm.State(waitingForsignature), fsm.State(waitingForPayment)).
 		WithTransition(fsm.State(waitingForApproval), fsm.State(waitingForApproval))
 
-	sm.WithCommand(fsm.Command(reject), "Reject").
+	sm.WithCommand(fsm.Command(reject), invoice.Reject).
 		WithTransition(fsm.State(waitingForApproval), fsm.State(rejected))
 
-	sm.WithCommand(fsm.Command(pay), "Pay").
+	sm.WithCommand(fsm.Command(pay), invoice.Pay).
 		WithTransition(fsm.State(waitingForPayment), fsm.State(completed))
 
 	return sm
