@@ -1,69 +1,758 @@
 package invoiceFsm
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/cgxarrie/fsm-go/fsm"
+	"github.com/cgxarrie/fsm-go/pkg/fsm"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestNewInvoiceStateMachineShouldInitialize(t *testing.T) {
-	sm := NewInvoiceStateMachine()
+func Test_ConfirmCommand(t *testing.T) {
+	tests := []struct {
+		name          string
+		from          InvoiceState
+		to            InvoiceState
+		needSignature bool
+		wantError     bool
+	}{
+		{
+			name:          "draft.NoSignature",
+			from:          draft,
+			to:            waitingForApproval,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "draft.Signature",
+			from:          draft,
+			to:            waitingForApproval,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForApproval.NoSignature",
+			from:          waitingForApproval,
+			to:            waitingForApproval,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForApproval.Signature",
+			from:          waitingForApproval,
+			to:            waitingForApproval,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForPayment.NoSignature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForPayment.Signature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.NoSignature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.Signature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.NoSignature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.Signature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "completed.NoSignature",
+			from:          completed,
+			to:            completed,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "completed.Signature",
+			from:          completed,
+			to:            completed,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.NoSignature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.Signature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     true,
+		},
+	}
 
-	if sm.State != fsm.State(draft) {
-		t.Errorf("Unexpected initial state: Got %d , expected %d", sm.State, draft)
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			inv := NewInvoice(test.needSignature)
+			inv.SetState(fsm.State(test.from))
+			sm := NewInvoiceStateMachine(&inv)
+			err := sm.ExecuteCommand(fsm.Command(confirm))
+			if !test.wantError {
+				assert.NoError(t, err)
+				assert.Equal(t, fsm.State(test.to), inv.State())
+			} else {
+				assert.Error(t, err)
+			}
+		})
 	}
 }
 
-var commandTests = []struct {
-	command       InvoiceCommand
-	fromState     InvoiceState
-	toState       InvoiceState
-	expectedError bool
-}{
-	{confirm, draft, waitingForApproval, false},
-	{confirm, waitingForApproval, waitingForApproval, true},
-	{confirm, rejected, rejected, true},
-	{confirm, completed, completed, true},
-	{confirm, waitingForPayment, waitingForPayment, true},
-	{reject, draft, draft, true},
-	{reject, waitingForApproval, rejected, false},
-	{reject, rejected, rejected, true},
-	{reject, waitingForPayment, waitingForPayment, true},
-	{reject, completed, completed, true},
-	{approve, draft, draft, true},
-	{approve, waitingForApproval, waitingForPayment, false},
-	{approve, rejected, rejected, true},
-	{approve, waitingForPayment, waitingForPayment, true},
-	{approve, completed, completed, true},
-	{pay, draft, draft, true},
-	{pay, waitingForApproval, waitingForApproval, true},
-	{pay, rejected, rejected, true},
-	{pay, waitingForPayment, completed, false},
-	{pay, completed, completed, true},
+func Test_ReceiveSignatureCommand(t *testing.T) {
+	tests := []struct {
+		name          string
+		from          InvoiceState
+		to            InvoiceState
+		needSignature bool
+		wantError     bool
+	}{
+		{
+			name:          "draft.NoSignature",
+			from:          draft,
+			to:            draft,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "draft.Signature",
+			from:          draft,
+			to:            draft,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForApproval.NoSignature",
+			from:          waitingForApproval,
+			to:            waitingForApproval,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForApproval.Signature",
+			from:          waitingForApproval,
+			to:            waitingForApproval,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForPayment.NoSignature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForPayment.Signature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.NoSignature",
+			from:          waitingForsignature,
+			to:            waitingForPayment,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForsignature.Signature",
+			from:          waitingForsignature,
+			to:            waitingForPayment,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "rejected.NoSignature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.Signature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "completed.NoSignature",
+			from:          completed,
+			to:            completed,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "completed.Signature",
+			from:          completed,
+			to:            completed,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.NoSignature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.Signature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     true,
+		},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			inv := NewInvoice(test.needSignature)
+			inv.SetState(fsm.State(test.from))
+			sm := NewInvoiceStateMachine(&inv)
+			err := sm.ExecuteCommand(fsm.Command(receiveSignature))
+			if !test.wantError {
+				assert.NoError(t, err)
+				assert.Equal(t, fsm.State(test.to), inv.State())
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
-func TestExecuteCommandShouldBehaveAsExpected(t *testing.T) {
-	for _, data := range commandTests {
-		sm := NewInvoiceStateMachine()
-		sm.State = fsm.State(data.fromState)
+func Test_RejectCommand(t *testing.T) {
+	tests := []struct {
+		name          string
+		from          InvoiceState
+		to            InvoiceState
+		needSignature bool
+		wantError     bool
+	}{
+		{
+			name:          "draft.NoSignature",
+			from:          draft,
+			to:            draft,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "draft.Signature",
+			from:          draft,
+			to:            draft,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForApproval.NoSignature",
+			from:          waitingForApproval,
+			to:            rejected,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForApproval.Signature",
+			from:          waitingForApproval,
+			to:            rejected,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForPayment.NoSignature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForPayment.Signature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.NoSignature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.Signature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.NoSignature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.Signature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "completed.NoSignature",
+			from:          completed,
+			to:            completed,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "completed.Signature",
+			from:          completed,
+			to:            completed,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.NoSignature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.Signature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     true,
+		},
+	}
 
-		_, err := sm.ExecuteCommand(fsm.Command(data.command))
+	for _, test := range tests {
 
-		if data.expectedError {
-			if err == nil {
-				t.Errorf("Command %s from State %s should throw error", fmt.Sprint(data.command), fmt.Sprint(data.fromState))
-				continue
+		t.Run(test.name, func(t *testing.T) {
+			inv := NewInvoice(test.needSignature)
+			inv.SetState(fsm.State(test.from))
+			sm := NewInvoiceStateMachine(&inv)
+			err := sm.ExecuteCommand(fsm.Command(reject))
+			if !test.wantError {
+				assert.NoError(t, err)
+				assert.Equal(t, fsm.State(test.to), inv.State())
+			} else {
+				assert.Error(t, err)
 			}
-		} else {
-			if err != nil {
-				t.Errorf("Command %s from State %s thrown error : %v", fmt.Sprint(data.command), fmt.Sprint(data.fromState), err)
-				continue
-			}
+		})
+	}
+}
 
-			if sm.State != fsm.State(data.toState) {
-				t.Errorf("Command %s from State %s should change state to %s", fmt.Sprint(data.command), fmt.Sprint(data.fromState), fmt.Sprint(data.toState))
+func Test_ApproveCommand(t *testing.T) {
+	tests := []struct {
+		name          string
+		from          InvoiceState
+		to            InvoiceState
+		needSignature bool
+		wantError     bool
+	}{
+		{
+			name:          "draft.NoSignature",
+			from:          draft,
+			to:            draft,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "draft.Signature",
+			from:          draft,
+			to:            draft,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForApproval.NoSignature",
+			from:          waitingForApproval,
+			to:            waitingForPayment,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForApproval.Signature",
+			from:          waitingForApproval,
+			to:            waitingForsignature,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForPayment.NoSignature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForPayment.Signature",
+			from:          waitingForPayment,
+			to:            waitingForPayment,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.NoSignature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.Signature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.NoSignature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.Signature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "completed.NoSignature",
+			from:          completed,
+			to:            completed,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "completed.Signature",
+			from:          completed,
+			to:            completed,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.NoSignature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.Signature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     true,
+		},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			inv := NewInvoice(test.needSignature)
+			inv.SetState(fsm.State(test.from))
+			sm := NewInvoiceStateMachine(&inv)
+			err := sm.ExecuteCommand(fsm.Command(approve))
+			if !test.wantError {
+				assert.NoError(t, err)
+				assert.Equal(t, fsm.State(test.to), inv.State())
+			} else {
+				assert.Error(t, err)
 			}
-		}
+		})
+	}
+}
+
+func Test_PayCommand(t *testing.T) {
+	tests := []struct {
+		name          string
+		from          InvoiceState
+		to            InvoiceState
+		needSignature bool
+		wantError     bool
+	}{
+		{
+			name:          "draft.NoSignature",
+			from:          draft,
+			to:            draft,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "draft.Signature",
+			from:          draft,
+			to:            draft,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForApproval.NoSignature",
+			from:          waitingForApproval,
+			to:            waitingForApproval,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForApproval.Signature",
+			from:          waitingForApproval,
+			to:            waitingForApproval,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForPayment.NoSignature",
+			from:          waitingForPayment,
+			to:            completed,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForPayment.Signature",
+			from:          waitingForPayment,
+			to:            completed,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForsignature.NoSignature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "waitingForsignature.Signature",
+			from:          waitingForsignature,
+			to:            waitingForsignature,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.NoSignature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.Signature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "completed.NoSignature",
+			from:          completed,
+			to:            completed,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "completed.Signature",
+			from:          completed,
+			to:            completed,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.NoSignature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.Signature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     true,
+		},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			inv := NewInvoice(test.needSignature)
+			inv.SetState(fsm.State(test.from))
+			sm := NewInvoiceStateMachine(&inv)
+			err := sm.ExecuteCommand(fsm.Command(pay))
+			if !test.wantError {
+				assert.NoError(t, err)
+				assert.Equal(t, fsm.State(test.to), inv.State())
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func Test_AbandonCommand(t *testing.T) {
+	tests := []struct {
+		name          string
+		from          InvoiceState
+		to            InvoiceState
+		needSignature bool
+		wantError     bool
+	}{
+		{
+			name:          "draft.NoSignature",
+			from:          draft,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "draft.Signature",
+			from:          draft,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForApproval.NoSignature",
+			from:          waitingForApproval,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForApproval.Signature",
+			from:          waitingForApproval,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForPayment.NoSignature",
+			from:          waitingForPayment,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForPayment.Signature",
+			from:          waitingForPayment,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForsignature.NoSignature",
+			from:          waitingForsignature,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     false,
+		},
+		{
+			name:          "waitingForsignature.Signature",
+			from:          waitingForsignature,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     false,
+		},
+		{
+			name:          "rejected.NoSignature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "rejected.Signature",
+			from:          rejected,
+			to:            rejected,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "completed.NoSignature",
+			from:          completed,
+			to:            completed,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "completed.Signature",
+			from:          completed,
+			to:            completed,
+			needSignature: true,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.NoSignature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: false,
+			wantError:     true,
+		},
+		{
+			name:          "abandoned.Signature",
+			from:          abandoned,
+			to:            abandoned,
+			needSignature: true,
+			wantError:     true,
+		},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			inv := NewInvoice(test.needSignature)
+			inv.SetState(fsm.State(test.from))
+			sm := NewInvoiceStateMachine(&inv)
+			err := sm.ExecuteCommand(fsm.Command(abandon))
+			if !test.wantError {
+				assert.NoError(t, err)
+				assert.Equal(t, fsm.State(test.to), inv.State())
+			} else {
+				assert.Error(t, err)
+			}
+		})
 	}
 }
