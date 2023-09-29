@@ -4,16 +4,16 @@ import "github.com/cgxarrie/fsm-go/pkg/fsm"
 
 type Invoice struct {
 	state             InvoiceState
-	signaturereceived bool
-	approved          bool
+	isSignatureReceived bool
+	isApproved          bool
 	needsSignature    bool
 }
 
 func NewInvoice(needsSignature bool) Invoice {
 	return Invoice{
 		state:             draft,
-		signaturereceived: false,
-		approved:          false,
+		isSignatureReceived: false,
+		isApproved:          false,
 		needsSignature:    needsSignature,
 	}
 }
@@ -31,7 +31,7 @@ func (i *Invoice) Confirm() error {
 }
 
 func (i *Invoice) ReceiveSignature() error {
-	i.signaturereceived = true
+	i.isSignatureReceived = true
 	return nil
 }
 
@@ -40,7 +40,7 @@ func (i *Invoice) Reject() error {
 }
 
 func (i *Invoice) Approve() error {
-	i.approved = true
+	i.isApproved = true
 	return nil
 }
 
@@ -52,13 +52,6 @@ func (i Invoice) Abandon() error {
 	return nil
 }
 
-func (i Invoice) SignatureReceived() bool {
-	return i.signaturereceived
-}
-
-func (i Invoice) NeedsSignature() bool {
-	return i.needsSignature && !i.signaturereceived
-}
 
 type InvoiceState fsm.State
 
@@ -98,7 +91,11 @@ func NewInvoiceStateMachine(invoice *Invoice) fsm.StateMachine {
 
 	sm.WithCommand(fsm.Command(approve), invoice.Approve).
 		WithConditionedTransition(fsm.State(waitingForApproval), 
-			fsm.State(waitingForsignature), invoice.NeedsSignature).
+			fsm.State(waitingForsignature), func() bool {
+				return func(i Invoice) bool {
+					return i.needsSignature && !i.isSignatureReceived
+				}(*invoice)
+			}).
 		WithTransition(fsm.State(waitingForApproval), fsm.State(waitingForPayment))
 
 	sm.WithCommand(fsm.Command(receiveSignature), invoice.ReceiveSignature).
