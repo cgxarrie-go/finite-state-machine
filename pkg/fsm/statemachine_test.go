@@ -1,51 +1,155 @@
 package fsm
 
 import (
-	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestStateMachine(t *testing.T) {
-	// Define some states and commands
+func Test_Action_WithTransition_AddFirstTransition_ShouldAdd(t *testing.T) {
+	// Arrange
 	const (
-		StateA State = iota
-		StateB
-		StateC
-		CommandX Command = iota
-		CommandY
-		CommandZ
+		state1 State = iota
+		state2
+		state3
 	)
 
-	// Define some test actions
-	action1 := func() error { return nil }
-	action2 := func() error { return errors.New("error") }
+	action := Action{}
 
-	// Create a new state machine with an initial state of StateA
-	fsm := New(StateA)
+	// Act
+	action.WithTransition(state1, state2, func() bool { return true })
 
-	// Add some actions to the state machine
-	fsm.WithAction(CommandX, action1).
-		WithTransition(StateA, StateB, func() bool { return true }).
-		WithTransition(StateB, StateC, func() bool { return true })
+	// Assert
+	assert.Len(t, action.transitions, 1)
+	assert.Equal(t, state1, action.transitions[state1].From)
+	assert.Len(t, action.transitions[state1].Targets, 1)
+	assert.Equal(t, state2, action.transitions[state1].Targets[state2].To)
+}
 
-	fsm.WithAction(CommandY, action2).
-		WithTransition(StateA, StateC, func() bool { return true })
+func Test_Action_WithTransition_AddTargetToExistingTransition_ShouldAdd(t *testing.T) {
+	// Arrange
+	const (
+		state1 State = iota
+		state2
+		state3
+	)
 
-	// Test that executing a command with valid transitions returns true and no error
-	ok, err := fsm.ExecuteCommand(CommandX)
-	if !ok || err != nil {
-		t.Errorf("Expected ExecuteCommand(CommandX) to return true and no error, but got %v and %v", ok, err)
+	action := Action{
+		transitions: map[State]*Transition{
+			state1: {
+				From: state1,
+				Targets: map[State]*Target{
+					state2: {
+						To:        state2,
+						Condition: func() bool { return true },
+					},
+				},
+			},
+		},
 	}
 
-	// Test that executing a command with invalid transitions returns false and no error
-	ok, err = fsm.ExecuteCommand(CommandY)
-	if ok || err != nil {
-		t.Errorf("Expected ExecuteCommand(CommandY) to return false and an error, but got %v and %v", ok, err)
+	// Act
+	action.WithTransition(state1, state3, func() bool { return true })
+
+	// Assert
+	assert.Len(t, action.transitions, 1)
+	assert.Equal(t, state1, action.transitions[state1].From)
+	assert.Len(t, action.transitions[state1].Targets, 2)
+	assert.Equal(t, state2, action.transitions[state1].Targets[state2].To)
+	assert.Equal(t, state3, action.transitions[state1].Targets[state3].To)
+}
+
+func Test_Action_WithTransition_AddExistingTargetToExistingTransition_ShouldNotAdd(t *testing.T) {
+	// Arrange
+	const (
+		state1 State = iota
+		state2
+		state3
+	)
+
+	cond12 := func() bool { return true }
+	cond13 := func() bool { return true }
+
+	action := Action{
+		transitions: map[State]*Transition{
+			state1: {
+				From: state1,
+				Targets: map[State]*Target{
+					state2: {
+						To:        state2,
+						Condition: cond12,
+					},
+					state3: {
+						To:        state3,
+						Condition: cond13,
+					},
+				},
+			},
+		},
 	}
 
-	// Test that executing a command with no transitions returns false and no error
-	ok, err = fsm.ExecuteCommand(CommandZ)
-	if ok || err != nil {
-		t.Errorf("Expected ExecuteCommand(CommandZ) to return false and no error, but got %v and %v", ok, err)
-	}
+	// Act
+	action.WithTransition(state1, state3, func() bool { return true })
+
+	// Assert
+	assert.Len(t, action.transitions, 1)
+	assert.Equal(t, state1, action.transitions[state1].From)
+	assert.Len(t, action.transitions[state1].Targets, 2)
+	assert.Equal(t, state2, action.transitions[state1].Targets[state2].To)
+	assert.Equal(t, state3, action.transitions[state1].Targets[state3].To)
+}
+
+func Test_StateMachine_WithCommand_ShouldAdd(t *testing.T) {
+	// Arrange
+	const (
+		state1 State = iota
+		state2
+		state3
+	)
+
+	const (
+		cmd1 Command = iota
+		cmd2
+		cmd3
+	)
+
+	fsm := New(state1)
+
+	// Act
+	fsm.WithCommand(cmd1, func() error { return nil })
+
+	// Assert
+	assert.Len(t, fsm.actions, 1)
+	assert.Equal(t, cmd1, fsm.actions[cmd1].command)
+}
+
+func Test_StateMachine_WithCommand_WithTransition_ShouldAdd(t *testing.T) {
+	// Arrange
+	const (
+		state1 State = iota
+		state2
+		state3
+	)
+
+	const (
+		cmd1 Command = iota
+		cmd2
+		cmd3
+	)
+
+	fsm := New(state1)
+
+	// Act
+	fsm.WithCommand(cmd1, func() error { return nil }).
+		WithTransition(state1, state2, func() bool { return true }).
+		WithTransition(state1, state3, func() bool { return true })
+
+	// Assert
+	assert.Len(t, fsm.actions, 1)
+	assert.Equal(t, cmd1, fsm.actions[cmd1].command)
+	assert.Len(t, fsm.actions[cmd1].transitions, 1)
+	assert.Equal(t, state1, fsm.actions[cmd1].transitions[state1].From)
+	assert.Len(t, fsm.actions[cmd1].transitions[state1].Targets, 2)
+	assert.Equal(t, state2, fsm.actions[cmd1].transitions[state1].Targets[state2].To)
+	assert.Equal(t, state3, fsm.actions[cmd1].transitions[state1].Targets[state3].To)
 }
