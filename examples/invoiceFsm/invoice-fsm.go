@@ -9,6 +9,14 @@ type Invoice struct {
 	needsSignature    bool
 }
 
+func (i *Invoice) SetState(state fsm.State) {
+	i.state = InvoiceState(state)
+}
+
+func (i *Invoice) State() fsm.State {
+	return fsm.State(i.state)
+}
+
 func NewInvoice(needsSignature bool) Invoice {
 	return Invoice{
 		state:             draft,
@@ -16,14 +24,6 @@ func NewInvoice(needsSignature bool) Invoice {
 		isApproved:          false,
 		needsSignature:    needsSignature,
 	}
-}
-
-func (i *Invoice) SetState(state fsm.State) {
-	i.state = InvoiceState(state)
-}
-
-func (i *Invoice) State() fsm.State {
-	return fsm.State(i.state)
 }
 
 func (i *Invoice) Confirm() error {
@@ -54,7 +54,6 @@ func (i Invoice) Abandon() error {
 
 
 type InvoiceState fsm.State
-
 const (
 	draft InvoiceState = iota
 	waitingForApproval
