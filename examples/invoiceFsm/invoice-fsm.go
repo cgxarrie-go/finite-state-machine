@@ -1,6 +1,6 @@
 package invoiceFsm
 
-import "github.com/cgxarrie/fsm-go/pkg/fsm"
+import "github.com/cgxarrie-go/fsm"
 
 type Invoice struct {
 	state             InvoiceState
