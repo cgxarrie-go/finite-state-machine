@@ -3,7 +3,7 @@ package invoiceFsm
 import (
 	"testing"
 
-	"github.com/cgxarrie/fsm-go/pkg/fsm"
+	"github.com/cgxarrie-go/fsm"
 	"github.com/stretchr/testify/assert"
 )
 
