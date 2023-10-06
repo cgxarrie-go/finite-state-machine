@@ -1,4 +1,4 @@
-module github.com/cgxarrie/fsm-go
+module github.com/cgxarrie/fsm
 
 go 1.18
 
