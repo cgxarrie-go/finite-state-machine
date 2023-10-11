@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/cgxarrie-go/fsm"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_ConfirmCommand(t *testing.T) {
@@ -122,11 +121,21 @@ func Test_ConfirmCommand(t *testing.T) {
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
 			err := sm.Do(fsm.CommandID(confirm))
-			if !test.wantError {
-				assert.NoError(t, err)
-				assert.Equal(t, fsm.State(test.to), inv.State())
-			} else {
-				assert.Error(t, err)
+			if test.wantError {
+				if err == nil {
+					t.Errorf("Expected error not found ")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error found: %s ", err.Error())
+				return
+			}
+
+			if expected, got := fsm.State(test.to), inv.State(); expected != got {
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
+					expected, got)
 			}
 		})
 	}
@@ -247,11 +256,21 @@ func Test_ReceiveSignatureCommand(t *testing.T) {
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
 			err := sm.Do(fsm.CommandID(receiveSignature))
-			if !test.wantError {
-				assert.NoError(t, err)
-				assert.Equal(t, fsm.State(test.to), inv.State())
-			} else {
-				assert.Error(t, err)
+			if test.wantError {
+				if err == nil {
+					t.Errorf("Expected error not found ")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error found: %s ", err.Error())
+				return
+			}
+
+			if expected, got := fsm.State(test.to), inv.State(); expected != got {
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
+					expected, got)
 			}
 		})
 	}
@@ -372,11 +391,21 @@ func Test_RejectCommand(t *testing.T) {
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
 			err := sm.Do(fsm.CommandID(reject))
-			if !test.wantError {
-				assert.NoError(t, err)
-				assert.Equal(t, fsm.State(test.to), inv.State())
-			} else {
-				assert.Error(t, err)
+			if test.wantError {
+				if err == nil {
+					t.Errorf("Expected error not found ")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error found: %s ", err.Error())
+				return
+			}
+
+			if expected, got := fsm.State(test.to), inv.State(); expected != got {
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
+					expected, got)
 			}
 		})
 	}
@@ -497,11 +526,21 @@ func Test_ApproveCommand(t *testing.T) {
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
 			err := sm.Do(fsm.CommandID(approve))
-			if !test.wantError {
-				assert.NoError(t, err)
-				assert.Equal(t, fsm.State(test.to), inv.State())
-			} else {
-				assert.Error(t, err)
+			if test.wantError {
+				if err == nil {
+					t.Errorf("Expected error not found ")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error found: %s ", err.Error())
+				return
+			}
+
+			if expected, got := fsm.State(test.to), inv.State(); expected != got {
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
+					expected, got)
 			}
 		})
 	}
@@ -622,11 +661,21 @@ func Test_PayCommand(t *testing.T) {
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
 			err := sm.Do(fsm.CommandID(pay))
-			if !test.wantError {
-				assert.NoError(t, err)
-				assert.Equal(t, fsm.State(test.to), inv.State())
-			} else {
-				assert.Error(t, err)
+			if test.wantError {
+				if err == nil {
+					t.Errorf("Expected error not found ")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error found: %s ", err.Error())
+				return
+			}
+
+			if expected, got := fsm.State(test.to), inv.State(); expected != got {
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
+					expected, got)
 			}
 		})
 	}
@@ -747,11 +796,21 @@ func Test_AbandonCommand(t *testing.T) {
 			inv.SetState(fsm.State(test.from))
 			sm := NewInvoiceStateMachine(&inv)
 			err := sm.Do(fsm.CommandID(abandon))
-			if !test.wantError {
-				assert.NoError(t, err)
-				assert.Equal(t, fsm.State(test.to), inv.State())
-			} else {
-				assert.Error(t, err)
+			if test.wantError {
+				if err == nil {
+					t.Errorf("Expected error not found ")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error found: %s ", err.Error())
+				return
+			}
+
+			if expected, got := fsm.State(test.to), inv.State(); expected != got {
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
+					expected, got)
 			}
 		})
 	}
