@@ -134,7 +134,7 @@ func Test_ConfirmCommand(t *testing.T) {
 			}
 
 			if expected, got := fsm.State(test.to), inv.State(); expected != got {
-				t.Errorf("Unexpected target ttate.\n\tExpected: %v\n\tGot: %v",
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
 					expected, got)
 			}
 		})
@@ -269,7 +269,7 @@ func Test_ReceiveSignatureCommand(t *testing.T) {
 			}
 
 			if expected, got := fsm.State(test.to), inv.State(); expected != got {
-				t.Errorf("Unexpected target ttate.\n\tExpected: %v\n\tGot: %v",
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
 					expected, got)
 			}
 		})
@@ -404,7 +404,7 @@ func Test_RejectCommand(t *testing.T) {
 			}
 
 			if expected, got := fsm.State(test.to), inv.State(); expected != got {
-				t.Errorf("Unexpected target ttate.\n\tExpected: %v\n\tGot: %v",
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
 					expected, got)
 			}
 		})
@@ -539,7 +539,7 @@ func Test_ApproveCommand(t *testing.T) {
 			}
 
 			if expected, got := fsm.State(test.to), inv.State(); expected != got {
-				t.Errorf("Unexpected target ttate.\n\tExpected: %v\n\tGot: %v",
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
 					expected, got)
 			}
 		})
@@ -674,7 +674,7 @@ func Test_PayCommand(t *testing.T) {
 			}
 
 			if expected, got := fsm.State(test.to), inv.State(); expected != got {
-				t.Errorf("Unexpected target ttate.\n\tExpected: %v\n\tGot: %v",
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
 					expected, got)
 			}
 		})
@@ -809,7 +809,7 @@ func Test_AbandonCommand(t *testing.T) {
 			}
 
 			if expected, got := fsm.State(test.to), inv.State(); expected != got {
-				t.Errorf("Unexpected target ttate.\n\tExpected: %v\n\tGot: %v",
+				t.Errorf("Unexpected target state.\n\tExpected: %v\n\tGot: %v",
 					expected, got)
 			}
 		})
